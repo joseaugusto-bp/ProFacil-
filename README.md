@@ -6,7 +6,7 @@ O **Profácil** é um sistema web acadêmico desenvolvido para simplificar a ges
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 O projeto utiliza uma arquitetura moderna dividida em camadas, operando sob o modelo *Single Page Application* (SPA) e API RESTful.
 
@@ -34,7 +34,7 @@ Antes de iniciar, você precisa ter as seguintes ferramentas instaladas na sua m
 
 ---
 
-## 📁 Estrutura do Repositório
+## Estrutura do Repositório
 
 ```text
 profacil/
@@ -45,7 +45,7 @@ profacil/
 
 ---
 
-## 🚀 Tutorial: Como rodar o projeto localmente
+## Tutorial: Como rodar o projeto localmente
 
 Siga o passo a passo abaixo para ligar o sistema completo (Backend e Frontend) no seu computador.
 
