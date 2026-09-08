@@ -1,4 +1,4 @@
-# 🎓 Profácil - Sistema de Gestão Escolar
+# Profácil - Sistema de Gestão Escolar
 
 > **Transformando dados educacionais em ações estratégicas.**
 
@@ -56,7 +56,7 @@ git clone https://github.com/joseaugusto-bp/ProFacil-.git
 cd ProFacil-
 ```
 
-### 2. Rodando o Backend (API)
+### 2. Rodando o Backend
 Abra o terminal e execute os comandos abaixo para iniciar a comunicação com o banco de dados.
 
 ```bash
