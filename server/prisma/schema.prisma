@@ -3,31 +3,134 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-model Aluno {
+enum Role {
+  ALUNO
+  PROFESSOR
+  COORDENADOR
+  RESPONSAVEL
+}
+
+// 1- Tabela 'Usuario' centraliza credenciais
+model Usuario {
   id        String   @id @default(uuid())
   nome      String
   email     String   @unique
-  turmaId   String?
-  turma     Turma?   @relation(fields: [turmaId], references: [id])
-  notas     Nota[]
+  senha     String // Será criptografada com bcrypt (RNF-003)
+  role      Role
   createdAt DateTime @default(now())
+
+  // Relações de Herança (apenas uma ativa por usuário)
+  aluno       Aluno?
+  professor   Professor?
+  coordenador Coordenador?
+  responsavel Responsavel?
+}
+
+// Tabelas Específicas
+model Aluno {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  responsavelId String?
+  responsavel   Responsavel? @relation(fields: [responsavelId], references: [id])
+
+  turmas   AlunoTurma[]
+  notas    Nota[]
+  entregas EntregaAtividade[]
+}
+
+model Professor {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  turmas     ProfessorTurma[]
+  atividades Atividade[]
+}
+
+model Coordenador {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+}
+
+model Responsavel {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  alunos Aluno[]
 }
 
 model Turma {
+  id        String @id @default(uuid())
+  nome      String // ex: 9º Ano A
+  anoLetivo Int
+
+  alunos      AlunoTurma[]
+  professores ProfessorTurma[]
+  atividades  Atividade[]
+}
+
+// 2- Tabelas Associativas
+model AlunoTurma {
+  alunoId String
+  aluno   Aluno  @relation(fields: [alunoId], references: [id])
+  turmaId String
+  turma   Turma  @relation(fields: [turmaId], references: [id])
+
+  @@id([alunoId, turmaId])
+}
+
+model ProfessorTurma {
+  professorId String
+  professor   Professor @relation(fields: [professorId], references: [id])
+  turmaId     String
+  turma       Turma     @relation(fields: [turmaId], references: [id])
+  disciplina  String // ex: Matemática
+
+  @@id([professorId, turmaId])
+}
+
+// Tabelas Acadêmicas
+model Atividade {
+  id         String   @id @default(uuid())
+  titulo     String
+  descricao  String?
+  dataLimite DateTime
+
+  professorId String
+  professor   Professor @relation(fields: [professorId], references: [id])
+  turmaId     String
+  turma       Turma     @relation(fields: [turmaId], references: [id])
+
+  entregas EntregaAtividade[]
+  notas    Nota[]
+}
+
+model EntregaAtividade {
   id        String   @id @default(uuid())
-  nome      String
-  alunos    Aluno[]
-  createdAt DateTime @default(now())
+  dataEnvio DateTime @default(now())
+  anexoUrl  String?
+
+  atividadeId String
+  atividade   Atividade @relation(fields: [atividadeId], references: [id])
+  alunoId     String
+  aluno       Aluno     @relation(fields: [alunoId], references: [id])
 }
 
 model Nota {
-  id        String   @id @default(uuid())
-  valor     Float
-  alunoId   String
-  aluno     Aluno    @relation(fields: [alunoId], references: [id])
-  createdAt DateTime @default(now())
+  id    String @id @default(uuid())
+  valor Float
+
+  alunoId     String
+  aluno       Aluno     @relation(fields: [alunoId], references: [id])
+  atividadeId String
+  atividade   Atividade @relation(fields: [atividadeId], references: [id])
 }
