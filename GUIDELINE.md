@@ -5,17 +5,21 @@ Este documento centraliza as regras de arquitetura, padrões de código e fluxo 
 ---
 
 ## 1. Fluxo de Trabalho e Git (Versionamento)
-Como atualmente o desenvolvimento está centralizado, o fluxo é direto na branch principal.
+Utilizamos o modelo ágil **Trunk-Based Development**.
 
-### Regras de Versionamento:
-- **`main`**: Todo o trabalho pode ser feito e commitado diretamente na branch `main`.
-- Não é necessário criar branches separadas (`feature-XX`) ou abrir Pull Requests no momento.
-- Faça commits lógicos e descritivos sempre que terminar uma parte funcional do projeto (ex: `feat: add dashboard coordenador`).
+### Regras de Branches:
+- **`main`**: É a fonte da verdade. **Apenas o Tech Lead (Arquiteto) tem permissão de dar push direto na main**.
+- **`feature-XX`**: Os demais desenvolvedores devem criar branches separadas. Use o formato em minúsculas com o nome ou número da tarefa.
+  - *Exemplo:* `git checkout -b feature-boletim-aluno`
 
-### Passos para enviar um código (Workflow):
-1. Adicione os arquivos: `git add .`
-2. Crie o commit: `git commit -m "sua mensagem"`
-3. Envie para o repositório: `git push origin main`
+### Passos para enviar um código (Restante da Equipe):
+1. Puxe as atualizações mais recentes: `git pull origin main`
+2. Crie a sua branch: `git checkout -b sua-feature`
+3. Trabalhe no código e faça commits curtos.
+4. Antes de enviar, atualize sua branch com a main:
+   - `git pull --rebase origin main`
+5. Suba sua branch: `git push origin sua-feature`
+6. Abra um **Pull Request (PR)** para a `main`.
 
 ---
 
