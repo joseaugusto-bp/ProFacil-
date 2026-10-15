@@ -1,39 +1,16 @@
-import { AppShell, NavLink, Title, Group, Stack } from '@mantine/core';
-import { IconLayoutDashboard, IconUsers, IconReportAnalytics, IconDatabase, IconSchool } from '@tabler/icons-react';
-import { useLocation, useNavigate } from 'react-router-dom';
-
-export function Sidebar() {
+import { Alert, AppShell, Button, NavLink, Stack, Text, Title } from '@mantine/core';
+import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { useAuth } from '../../auth/context';
+export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const links = [
-    { icon: IconLayoutDashboard, label: 'Dashboard', path: '/coordenador/dashboard' },
-    { icon: IconUsers, label: 'Turmas', path: '/coordenador/turmas' },
-    { icon: IconReportAnalytics, label: 'Notas', path: '/coordenador/notas' },
-    { icon: IconDatabase, label: 'Banco de Questões', path: '/coordenador/questoes' },
-  ];
-
-  return (
-    <AppShell.Navbar p="md">
-      <Group mb="xl" justify="center" align="center">
-        <IconSchool size={32} color="var(--mantine-color-brand-6)" />
-        <Title order={3} c="brand">ProFácil</Title>
-      </Group>
-
-      <Stack gap="sm">
-        {links.map((link) => (
-          <NavLink
-            key={link.label}
-            active={location.pathname === link.path}
-            label={link.label}
-            leftSection={<link.icon size={20} stroke={1.5} />}
-            onClick={() => navigate(link.path)}
-            variant="filled"
-            color="brand"
-            style={{ borderRadius: '8px' }}
-          />
-        ))}
-      </Stack>
-    </AppShell.Navbar>
-  );
+  const { sair } = useAuth();
+  const [erro, setErro] = useState<string | null>(null);
+  return <AppShell.Navbar p="md"><Stack h="100%">
+    <Title order={3} c="brand">Coordenação</Title>
+    {[{ label: 'Dashboard demonstrativo', path: '/coordenador/dashboard' }, { label: 'Turmas — em desenvolvimento', path: '/coordenador/turmas' }].map(link => <NavLink key={link.path} component={Link} to={link.path} label={link.label} active={location.pathname === link.path} onClick={onNavigate} />)}
+    <Text size="sm" c="dimmed">Notas e banco de questões serão disponibilizados após implementação.</Text>
+    {erro && <Alert color="red">{erro}</Alert>}
+    <Button mt="auto" variant="light" onClick={async () => { try { await sair(); } catch { setErro('Não foi possível encerrar a sessão. Tente novamente.'); } }}>Sair</Button>
+  </Stack></AppShell.Navbar>;
 }

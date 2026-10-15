@@ -1,53 +1,27 @@
-# 📘 Diretrizes do Projeto (Profácil)
+# Diretrizes compartilhadas — Profácil
 
-Este documento centraliza as regras de arquitetura, padrões de código e fluxo de trabalho para que toda a equipe desenvolva no mesmo ritmo e evite conflitos de código.
+## Organização
+Frontend em client-mantine; API em server; contratos em docs. Uma instituição por ambiente.
+A divisão de entrega é por perfil, com responsável principal para cada fluxo completo (tela, API, permissões e testes). Banco, identidade, indicadores e contratos são compartilhados e têm revisão conjunta. Consulte docs/GUIA_PARA_OS_DEVS.md.
 
----
+## Git
+Main é a linha principal de integração. Toda mudança, inclusive do líder técnico, deve passar por PR revisado e CI aprovada.
+Branches curtas: feature/<issue>-<descricao>. Exemplo: feature/12-boletim-aluno.
+Partir da main atualizada, fazer commits focados e atualizar a branch antes da revisão. Merge ou rebase conforme política do grupo; não reescrever main ou histórico compartilhado sem coordenação.
+Não adicionar segredos, .env, dependências instaladas ou artefatos gerados.
 
-## 1. Fluxo de Trabalho e Git (Versionamento)
-Utilizamos o modelo ágil **Trunk-Based Development**.
+## Contratos
+docs/openapi.yaml documenta endpoints existentes. Propostas futuras ficam marcadas como planejadas no guia.
+Mudança incompatível em DTO, rota, enum ou schema exige alinhamento entre os perfis. Não criar fórmulas, modelos de aluno ou autenticações paralelas.
+Perfis são atribuídos no servidor; cliente não determina privilégios.
+A UI não é barreira de autorização: validar usuário, recurso e vínculo na API.
 
-### Regras de Branches:
-- **`main`**: É a fonte da verdade. **Apenas o Tech Lead (Arquiteto) tem permissão de dar push direto na main**.
-- **`feature-XX`**: Os demais desenvolvedores devem criar branches separadas. Use o formato em minúsculas com o nome ou número da tarefa.
-  - *Exemplo:* `git checkout -b feature-boletim-aluno`
+## Banco
+Decisão temporária: um projeto Supabase de desenvolvimento compartilhado, com dados fictícios. API e frontend rodam localmente para cada dev. Não é necessário instalar PostgreSQL local para desenvolver os perfis. Credenciais de banco ficam somente no server/.env individual e são transmitidas apenas à equipe por canal privado; não compartilhar login pessoal do Supabase nem versionar segredos.
+Mudanças via migrations versionadas e revisadas. Um responsável pela base aplica as migrações; os demais propõem mudanças em PR. Não executar db push, migrate reset ou testes de banco destrutivos na base compartilhada. A CI continua usando PostgreSQL descartável.
+A migração inicial desta revisão é para base vazia; conversão de base existente exige plano específico, backup e restauração testada.
+As constraints e triggers da migração complementam o Prisma; preserve-as nas próximas migrações.
 
-### Passos para enviar um código (Restante da Equipe):
-1. Puxe as atualizações mais recentes: `git pull origin main`
-2. Crie a sua branch: `git checkout -b sua-feature`
-3. Trabalhe no código e faça commits curtos.
-4. Antes de enviar, atualize sua branch com a main:
-   - `git pull --rebase origin main`
-5. Suba sua branch: `git push origin sua-feature`
-6. Abra um **Pull Request (PR)** para a `main`.
-
----
-
-## 2. Frontend (React + Mantine)
-
-### Estrutura de Pastas (`/client-mantine/src`):
-- `/components`: Apenas elementos reutilizáveis e visuais (Botões customizados, Cards de estatística, Gráficos).
-- `/pages`: Telas completas que juntam vários componentes (Ex: `/pages/Coordenador/Dashboard`).
-- `/routes`: Regras de quais URLs abrem quais telas.
-- `/styles`: Temas globais (`theme.ts`) e configurações do Mantine.
-
-### Regras Visuais:
-- **Responsividade (Mobile-First):** Sempre teste as telas reduzindo o tamanho do navegador. Use o `SimpleGrid` ou `Grid` do Mantine para empilhar componentes no celular automaticamente.
-- **Componentes Prontos:** Antes de tentar criar algo do zero (como um Modal ou Input), olhe a documentação oficial do [Mantine](https://mantine.dev/).
-- **Aparência Limpa:** Siga a estética *SaaS Moderno* (sombras sutis, cantos levemente arredondados, pouco uso de linhas pretas pesadas).
-
----
-
-## 3. Backend (Node.js + Prisma)
-
-### Arquitetura (Padrão MSC):
-O servidor está estruturado para que regras de banco e interface não se misturem.
-- `/routes`: Recebe a chamada da internet (Frontend) e manda para o Controller.
-- `/controllers`: Pega os dados que chegaram (`req.body`, `req.params`) e repassa para o Service. Responde com o status correto (ex: `200 OK` ou `400 Error`).
-- `/services`: O "Cérebro". Aqui entram as regras de negócio reais (ex: checar se a data da atividade já passou antes de salvar).
-- `/prisma`: Onde a modelagem do banco de dados reside (`schema.prisma`). Use apenas o Prisma Client para acessar os dados.
-
-### Banco de Dados (Supabase):
-- O banco de dados está centralizado no Supabase (PostgreSQL).
-- Todos os devs devem usar o mesmo arquivo `.env` para apontar para a nuvem.
-- Se você criar uma nova tabela no `schema.prisma`, **avise a equipe** antes de rodar `npx prisma db push` para que ninguém perca o sincronismo.
+## Entrega
+Critérios mínimos: schema válido, Prisma Client atualizado, build, testes críticos, revisão, contrato e documentação atualizados.
+Diferenciar: planejado, implementado no backend, integrado e validado. Mock não é integração.

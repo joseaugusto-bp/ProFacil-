@@ -1,0 +1,50 @@
+name: Validação do PI
+on: [push, pull_request]
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: profacil_test
+          POSTGRES_PASSWORD: teste_local_ci
+          POSTGRES_DB: profacil_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U profacil_test -d profacil_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://profacil_test:teste_local_ci@127.0.0.1:5432/profacil_test
+      DIRECT_URL: postgresql://profacil_test:teste_local_ci@127.0.0.1:5432/profacil_test
+      RUN_DATABASE_TESTS: '1'
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run prisma:validate
+      - run: npm run db:deploy
+      - run: npm test
+      - run: node scripts/check-generated.cjs
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: client-mantine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: client-mantine/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build

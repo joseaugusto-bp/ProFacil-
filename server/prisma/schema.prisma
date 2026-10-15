@@ -1,5 +1,7 @@
 generator client {
-  provider = "prisma-client-js"
+  // Comando explícito usa o gerador da versão local, inclusive em diretórios OneDrive.
+  provider = "node ./node_modules/@prisma/client/generator-build/index.js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -15,43 +17,49 @@ enum Role {
   RESPONSAVEL
 }
 
-// 1- Tabela 'Usuario' centraliza credenciais
+// MVP: uma instituição por ambiente.
 model Usuario {
-  id        String   @id @default(uuid())
-  nome      String
-  email     String   @unique
-  senha     String // Será criptografada com bcrypt (RNF-003)
-  role      Role
-  createdAt DateTime @default(now())
-
-  // Relações de Herança (apenas uma ativa por usuário)
-  aluno       Aluno?
-  professor   Professor?
-  coordenador Coordenador?
-  responsavel Responsavel?
+  id                    String             @id @default(uuid())
+  nome                  String
+  email                 String             @unique
+  senha                 String // hash bcrypt; nunca incluir em DTO público
+  role                  Role
+  ativo                 Boolean            @default(true)
+  createdAt             DateTime           @default(now())
+  aluno                 Aluno?
+  professor             Professor?
+  coordenador           Coordenador?
+  responsavel           Responsavel?
+  sessoes               Sessao[]
+  validacoesResponsavel AlunoResponsavel[] @relation("ValidacaoResponsavel")
 }
 
-// Tabelas Específicas
+model Sessao {
+  id              String   @id // SHA-256 do token
+  usuarioId       String
+  usuario         Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  csrfToken       String
+  expiraEm        DateTime
+  ultimaAtividade DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([expiraEm])
+}
+
 model Aluno {
-  id        String  @id @default(uuid())
-  usuarioId String  @unique
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-
-  responsavelId String?
-  responsavel   Responsavel? @relation(fields: [responsavelId], references: [id])
-
-  turmas   AlunoTurma[]
-  notas    Nota[]
-  entregas EntregaAtividade[]
+  id           String             @id @default(uuid())
+  usuarioId    String             @unique
+  usuario      Usuario            @relation(fields: [usuarioId], references: [id])
+  matriculas   AlunoTurma[]
+  responsaveis AlunoResponsavel[]
 }
 
 model Professor {
-  id        String  @id @default(uuid())
-  usuarioId String  @unique
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-
-  turmas     ProfessorTurma[]
-  atividades Atividade[]
+  id        String           @id @default(uuid())
+  usuarioId String           @unique
+  usuario   Usuario          @relation(fields: [usuarioId], references: [id])
+  turmas    ProfessorTurma[]
 }
 
 model Coordenador {
@@ -61,76 +69,171 @@ model Coordenador {
 }
 
 model Responsavel {
-  id        String  @id @default(uuid())
-  usuarioId String  @unique
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  id        String             @id @default(uuid())
+  usuarioId String             @unique
+  usuario   Usuario            @relation(fields: [usuarioId], references: [id])
+  alunos    AlunoResponsavel[]
+}
 
-  alunos Aluno[]
+model AlunoResponsavel {
+  id            String      @id @default(uuid())
+  alunoId       String
+  aluno         Aluno       @relation(fields: [alunoId], references: [id])
+  responsavelId String
+  responsavel   Responsavel @relation(fields: [responsavelId], references: [id])
+  inicio        DateTime    @default(now())
+  fim           DateTime?
+  validadoPorId String
+  validadoPor   Usuario     @relation("ValidacaoResponsavel", fields: [validadoPorId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "validador_existente")
+
+  @@index([responsavelId, fim])
+  @@index([alunoId])
 }
 
 model Turma {
-  id        String @id @default(uuid())
-  nome      String // ex: 9º Ano A
-  anoLetivo Int
-
+  id          String           @id @default(uuid())
+  nome        String
+  anoLetivo   Int
   alunos      AlunoTurma[]
   professores ProfessorTurma[]
-  atividades  Atividade[]
+
+  @@unique([nome, anoLetivo])
+  @@unique([id, anoLetivo])
 }
 
-// 2- Tabelas Associativas
-model AlunoTurma {
-  alunoId String
-  aluno   Aluno  @relation(fields: [alunoId], references: [id])
-  turmaId String
-  turma   Turma  @relation(fields: [turmaId], references: [id])
+model PeriodoLetivo {
+  id         String      @id @default(uuid())
+  nome       String
+  anoLetivo  Int
+  inicio     DateTime
+  fim        DateTime
+  fechado    Boolean     @default(false)
+  atividades Atividade[]
+  aulas      Aula[]
 
-  @@id([alunoId, turmaId])
+  @@unique([nome, anoLetivo])
+  @@unique([id, anoLetivo])
+}
+
+model Disciplina {
+  id          String           @id @default(uuid())
+  nome        String           @unique
+  professores ProfessorTurma[]
+}
+
+// Vigências [inicio, fim); fim nulo = vínculo aberto.
+model AlunoTurma {
+  id        String             @id @default(uuid())
+  alunoId   String
+  aluno     Aluno              @relation(fields: [alunoId], references: [id])
+  turmaId   String
+  anoLetivo Int
+  turma     Turma              @relation(fields: [turmaId, anoLetivo], references: [id, anoLetivo])
+  inicio    DateTime           @default(now())
+  fim       DateTime?
+  notas     Nota[]
+  entregas  EntregaAtividade[]
+  presencas Presenca[]
+
+  @@index([alunoId, anoLetivo])
+  @@index([turmaId])
 }
 
 model ProfessorTurma {
-  professorId String
-  professor   Professor @relation(fields: [professorId], references: [id])
-  turmaId     String
-  turma       Turma     @relation(fields: [turmaId], references: [id])
-  disciplina  String // ex: Matemática
+  id           String      @id @default(uuid())
+  professorId  String
+  professor    Professor   @relation(fields: [professorId], references: [id])
+  turmaId      String
+  anoLetivo    Int
+  turma        Turma       @relation(fields: [turmaId, anoLetivo], references: [id, anoLetivo])
+  disciplinaId String
+  disciplina   Disciplina  @relation(fields: [disciplinaId], references: [id])
+  inicio       DateTime    @default(now())
+  fim          DateTime?
+  atividades   Atividade[]
+  aulas        Aula[]
 
-  @@id([professorId, turmaId])
+  @@unique([professorId, turmaId, disciplinaId, inicio])
+  @@unique([id, anoLetivo])
+  @@index([turmaId, disciplinaId])
 }
 
-// Tabelas Acadêmicas
 model Atividade {
-  id         String   @id @default(uuid())
-  titulo     String
-  descricao  String?
-  dataLimite DateTime
+  id               String             @id @default(uuid())
+  titulo           String
+  descricao        String?
+  dataAvaliacao    DateTime
+  dataLimite       DateTime?
+  peso             Decimal            @default(1) @db.Decimal(6, 2)
+  vinculoDocenteId String
+  anoLetivo        Int
+  vinculoDocente   ProfessorTurma     @relation(fields: [vinculoDocenteId, anoLetivo], references: [id, anoLetivo])
+  periodoId        String
+  periodo          PeriodoLetivo      @relation(fields: [periodoId, anoLetivo], references: [id, anoLetivo])
+  entregas         EntregaAtividade[]
+  notas            Nota[]
 
-  professorId String
-  professor   Professor @relation(fields: [professorId], references: [id])
-  turmaId     String
-  turma       Turma     @relation(fields: [turmaId], references: [id])
-
-  entregas EntregaAtividade[]
-  notas    Nota[]
+  @@index([periodoId])
 }
 
 model EntregaAtividade {
-  id        String   @id @default(uuid())
-  dataEnvio DateTime @default(now())
-  anexoUrl  String?
+  id           String     @id @default(uuid())
+  dataEnvio    DateTime   @default(now())
+  resposta     String?
+  anexoChave   String? // chave privada, não URL pública
+  requisicaoId String     @unique
+  atividadeId  String
+  atividade    Atividade  @relation(fields: [atividadeId], references: [id])
+  matriculaId  String
+  matricula    AlunoTurma @relation(fields: [matriculaId], references: [id])
 
-  atividadeId String
-  atividade   Atividade @relation(fields: [atividadeId], references: [id])
-  alunoId     String
-  aluno       Aluno     @relation(fields: [alunoId], references: [id])
+  @@unique([atividadeId, matriculaId]) // MVP: uma entrega sem reenvio
 }
 
 model Nota {
-  id    String @id @default(uuid())
-  valor Float
+  id           String     @id @default(uuid())
+  valor        Decimal    @db.Decimal(4, 2)
+  versao       Int        @default(1)
+  atualizadoEm DateTime   @updatedAt
+  matriculaId  String
+  matricula    AlunoTurma @relation(fields: [matriculaId], references: [id])
+  atividadeId  String
+  atividade    Atividade  @relation(fields: [atividadeId], references: [id])
 
-  alunoId     String
-  aluno       Aluno     @relation(fields: [alunoId], references: [id])
-  atividadeId String
-  atividade   Atividade @relation(fields: [atividadeId], references: [id])
+  @@unique([matriculaId, atividadeId])
+}
+
+model Aula {
+  id               String         @id @default(uuid())
+  data             DateTime
+  cargaMinutos     Int
+  cancelada        Boolean        @default(false)
+  vinculoDocenteId String
+  anoLetivo        Int
+  vinculoDocente   ProfessorTurma @relation(fields: [vinculoDocenteId, anoLetivo], references: [id, anoLetivo])
+  periodoId        String
+  periodo          PeriodoLetivo  @relation(fields: [periodoId, anoLetivo], references: [id, anoLetivo])
+  presencas        Presenca[]
+}
+
+model Presenca {
+  id          String     @id @default(uuid())
+  aulaId      String
+  aula        Aula       @relation(fields: [aulaId], references: [id])
+  matriculaId String
+  matricula   AlunoTurma @relation(fields: [matriculaId], references: [id])
+  presente    Boolean
+
+  @@unique([aulaId, matriculaId])
+}
+
+model Auditoria {
+  id        String   @id @default(uuid())
+  autorId   String
+  acao      String
+  recursoId String
+  detalhes  Json?
+  createdAt DateTime @default(now())
+
+  @@index([recursoId, createdAt])
 }

@@ -1,0 +1,246 @@
+openapi: 3.1.0
+info:
+  title: Profácil — API implementada
+  version: 0.1.0
+  description: Uma instituição por ambiente. Endpoints planejados estão no guia de repasse.
+servers:
+  - url: /api
+security:
+  - sessao: []
+paths:
+  /health:
+    get:
+      security: []
+      responses:
+        '200':
+          description: Processo disponível; não comprova conexão ao banco.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: {type: string, const: ok}
+  /auth/login:
+    post:
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, senha]
+              properties:
+                email: {type: string, format: email}
+                senha: {type: string, minLength: 1, description: Máximo 72 bytes UTF-8.}
+      responses:
+        '200':
+          description: Define cookie HttpOnly profacil_session; não retorna seu token no JSON.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Sessao'}
+        '400': {$ref: '#/components/responses/EntradaInvalida'}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '403': {$ref: '#/components/responses/Proibido'}
+        '429':
+          description: Limite de tentativas por IP atingido.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Erro'}
+  /auth/me:
+    get:
+      responses:
+        '200':
+          description: Identidade e token CSRF atuais; privilégios consultados no servidor.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Sessao'}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+  /auth/logout:
+    post:
+      security:
+        - sessao: []
+          csrf: []
+      parameters:
+        - $ref: '#/components/parameters/Origin'
+      responses:
+        '204': {description: Sessão revogada e cookie removido.}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '403': {$ref: '#/components/responses/Proibido'}
+  /alunos:
+    get:
+      description: Exclusivo de COORDENADOR.
+      parameters:
+        - in: query
+          name: pagina
+          schema: {type: integer, minimum: 1, maximum: 100000, default: 1}
+        - in: query
+          name: limite
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+      responses:
+        '200':
+          description: Lista paginada, sem hashes ou dados de sessão.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dados, paginacao]
+                properties:
+                  dados:
+                    type: array
+                    items: {$ref: '#/components/schemas/Aluno'}
+                  paginacao:
+                    type: object
+                    required: [pagina, limite, total]
+                    properties:
+                      pagina: {type: integer}
+                      limite: {type: integer}
+                      total: {type: integer}
+        '400': {$ref: '#/components/responses/EntradaInvalida'}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '403': {$ref: '#/components/responses/Proibido'}
+        '500': {$ref: '#/components/responses/ErroInterno'}
+    post:
+      description: Exclusivo de COORDENADOR. Cria Usuario ALUNO e perfil em transação com auditoria, sem matrícula automática.
+      security:
+        - sessao: []
+          csrf: []
+      parameters:
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [nome, email, senha]
+              properties:
+                nome: {type: string, minLength: 2, maxLength: 120}
+                email: {type: string, format: email, maxLength: 254}
+                senha: {type: string, minLength: 12, description: Máximo 72 bytes UTF-8; nunca armazenada em texto puro.}
+      responses:
+        '201':
+          description: Aluno criado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dados]
+                properties:
+                  dados: {$ref: '#/components/schemas/Aluno'}
+        '400': {$ref: '#/components/responses/EntradaInvalida'}
+        '401': {$ref: '#/components/responses/NaoAutenticado'}
+        '403': {$ref: '#/components/responses/Proibido'}
+        '409':
+          description: Duplicidade de dados únicos.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Erro'}
+        '500': {$ref: '#/components/responses/ErroInterno'}
+components:
+  securitySchemes:
+    sessao:
+      type: apiKey
+      in: cookie
+      name: profacil_session
+    csrf:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+  parameters:
+    Origin:
+      in: header
+      name: Origin
+      required: true
+      description: Exatamente FRONTEND_ORIGIN. Enviado automaticamente pelo navegador nas escritas.
+      schema: {type: string, format: uri}
+  schemas:
+    Usuario:
+      type: object
+      required: [id, nome, email, role, aluno, professor, responsavel]
+      properties:
+        id: {type: string, format: uuid}
+        nome: {type: string}
+        email: {type: string, format: email}
+        role: {type: string, enum: [ALUNO, PROFESSOR, COORDENADOR, RESPONSAVEL]}
+        aluno: {$ref: '#/components/schemas/Perfil'}
+        professor: {$ref: '#/components/schemas/Perfil'}
+        responsavel: {$ref: '#/components/schemas/Perfil'}
+    Perfil:
+      type: [object, 'null']
+      properties:
+        id: {type: string, format: uuid}
+    Sessao:
+      type: object
+      required: [dados]
+      properties:
+        dados:
+          type: object
+          required: [usuario, csrfToken]
+          properties:
+            usuario: {$ref: '#/components/schemas/Usuario'}
+            csrfToken: {type: string, description: Manter em memória e enviar em X-CSRF-Token nas escritas.}
+    Aluno:
+      type: object
+      required: [id, usuario, matriculas]
+      properties:
+        id: {type: string, format: uuid}
+        usuario:
+          type: object
+          required: [id, nome, email, ativo, createdAt]
+          properties:
+            id: {type: string, format: uuid}
+            nome: {type: string}
+            email: {type: string, format: email}
+            ativo: {type: boolean}
+            createdAt: {type: string, format: date-time}
+        matriculas:
+          type: array
+          items:
+            type: object
+            required: [id, inicio, fim, turma]
+            properties:
+              id: {type: string, format: uuid}
+              inicio: {type: string, format: date-time}
+              fim: {type: [string, 'null'], format: date-time}
+              turma:
+                type: object
+                required: [id, nome, anoLetivo]
+                properties:
+                  id: {type: string, format: uuid}
+                  nome: {type: string}
+                  anoLetivo: {type: integer}
+    Erro:
+      type: object
+      required: [erro]
+      properties:
+        erro:
+          type: object
+          required: [codigo, mensagem]
+          properties:
+            codigo: {type: string}
+            mensagem: {type: string}
+  responses:
+    EntradaInvalida:
+      description: Entrada inválida.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Erro'}
+    NaoAutenticado:
+      description: Sessão ausente, expirada, revogada ou usuário inativo.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Erro'}
+    Proibido:
+      description: Origem, CSRF, perfil ou vínculo não autorizado.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Erro'}
+    ErroInterno:
+      description: Falha interna sem exposição de diagnóstico.
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Erro'}

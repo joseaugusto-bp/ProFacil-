@@ -1,90 +1,72 @@
-# Profácil - Sistema de Gestão Escolar
+# Profácil — base compartilhada do PI
 
-> **Transformando dados educacionais em ações estratégicas.**
+Estado: base técnica preparada para desenvolvimento por perfil. Autenticação, sessão e cadastro/listagem de alunos estão implementados; dashboard é demonstrativo. Turmas e áreas dos demais perfis ainda não implementam os fluxos acadêmicos.
 
-O **Profácil** é um sistema web acadêmico desenvolvido para simplificar a gestão escolar. Ele centraliza as rotinas de Professores, Coordenadores, Alunos e Responsáveis em uma única plataforma intuitiva, oferecendo ferramentas como: painéis de desempenho (*dashboards*), *kanban* de atividades, controle de notas, histórico escolar e acompanhamento de risco pedagógico.
+## Comece aqui
 
----
+1. Leia docs/GUIA_PARA_OS_DEVS.md para a divisão, contratos e critérios de aceite.
+2. Use Node.js 24, PostgreSQL com btree_gist e npm.
+3. Temporariamente, os quatro devs usam o mesmo PostgreSQL de desenvolvimento no Supabase. Cada um roda sua API e frontend localmente e mantém seu próprio server/.env. Somente o responsável pela base aplica migrações.
+4. Confira GUIDELINE.md e os guias de frontend/backend antes de contribuir.
 
-## Tecnologias Utilizadas
+## Supabase compartilhado de desenvolvimento
 
-O projeto utiliza uma arquitetura moderna dividida em camadas, operando sob o modelo *Single Page Application* (SPA) e API RESTful.
+A migração inicial foi preparada para um banco VAZIO. Ela não converte automaticamente um banco antigo com dados. O .env existente foi preservado e pode continuar apontando para o schema antigo.
 
-### Frontend (Interface do Usuário)
-* **React + Vite**
-* **Tailwind CSS / Mantine UI**
-* **JavaScript / TypeScript**
+O responsável cria/configura um projeto Supabase de desenvolvimento e distribui a conexão apenas à equipe, por canal privado. Cada dev configura server/.env a partir do exemplo. Para o Prisma 5, usar Session pooler (porta 5432) em DATABASE_URL e DIRECT_URL; esse modo aceita aplicação e migrações e funciona em IPv4. Instruções completas: docs/SUPABASE_COMPARTILHADO.md.
 
-### Backend (Regras de Negócio e API)
-* **Node.js + Express**
-* **TypeScript**
-* **Prisma ORM**
+Todos os devs, no diretório server:
 
-### Banco de Dados
-* **PostgreSQL**
-
----
-
-## ⚙️ Pré-requisitos
-
-Antes de iniciar, você precisa ter as seguintes ferramentas instaladas na sua máquina:
-* [Git](https://git-scm.com/)
-* [Node.js](https://nodejs.org/en/) (versão 18 ou superior)
-* [PostgreSQL](https://www.postgresql.org/) rodando na máquina ou em nuvem
-
----
-
-## Estrutura do Repositório
-
-```text
-profacil/
-├── client-mantine/   # Frontend React + Mantine UI + Vite
-├── server/           # Backend Node.js + Express + Prisma
-└── guidelines.md     # Regras de contribuição e GitFlow
+```sh
+npm ci --ignore-scripts
+npm run prisma:validate
+npm run prisma:generate
+npm test
 ```
 
----
+Somente o responsável executa npm run db:deploy, após revisar o destino e as migrações. Os demais não aplicam migrações. Não executar migrate reset, db push ou a migração inicial contra o Supabase existente para “resolver” diferenças. Para reutilizar dados antigos: inventariar schema real, fazer backup e teste de restauração, escrever conversão específica e revisar antes da aplicação. Não marcar a migração como aplicada em banco incompatível.
 
-## Tutorial: Como rodar o projeto localmente
+## Primeiro coordenador
 
-Siga o passo a passo abaixo para ligar o sistema completo (Backend e Frontend) no seu computador.
+Não existe senha padrão nem cadastro público. O responsável cria o primeiro coordenador uma única vez no ambiente compartilhado. Em PowerShell, configure temporariamente:
 
-### 1. Clonar o repositório
-Abra o seu terminal e rode o comando:
-```bash
-git clone https://github.com/joseaugusto-bp/ProFacil-.git
-cd ProFacil-
+```powershell
+$env:ADMIN_EMAIL = 'coordenador@example.test'
+$env:ADMIN_NAME = 'Coordenador de desenvolvimento'
+$segredo = Read-Host 'Senha inicial (mínimo 12 caracteres, máximo 72 bytes)' -AsSecureString
+$env:ADMIN_PASSWORD = [System.Net.NetworkCredential]::new('', $segredo).Password
+npm run bootstrap
+Remove-Item Env:ADMIN_PASSWORD
 ```
 
-### 2. Rodando o Backend
-Abra o terminal e execute os comandos abaixo para iniciar a comunicação com o banco de dados.
+O comando cria um novo coordenador e recusa duplicidade; não redefine senha de usuário existente. Não use dados reais no ambiente de demonstração.
 
-```bash
-# Entre na pasta do backend
-cd server
+## Executar
 
-# Instale as dependências
-npm install
+Em server: npm run dev (API em 127.0.0.1:3000).
+Em client-mantine: npm ci e npm run dev.
+Abra http://localhost:5173. FRONTEND_ORIGIN no backend deve ser exatamente a origem usada no navegador. Vite encaminha /api ao backend.
 
-# Envie a estrutura do Prisma para criar as tabelas no PostgreSQL
-npx prisma migrate dev --name init
+Login usa cookie HttpOnly, SameSite=Strict e sessão opaca persistida no banco (hash do token). Em produção o cookie exige HTTPS/Secure. CSRF fica apenas em memória no frontend, recuperado em /api/auth/me. Sessão: 8 horas absolutas e 30 minutos de inatividade. Recuperação de senha e cadastro dos demais perfis continuam no backlog.
 
-# Ligue o servidor de desenvolvimento
-npm run dev
-```
+## Verificações
 
-### 3. Rodando o Frontend (Interface)
-Abra um **segundo terminal** (mantenha o backend rodando no primeiro) e faça as instalações do front:
+Backend: npm test, npm run prisma:validate e node scripts/check-generated.cjs.
+Frontend: npm run lint e npm run build.
+A CI em .github/workflows/ci.yml aplica a migração em PostgreSQL descartável e executa testes com banco.
 
-```bash
-# Na raiz do projeto, entre na pasta do frontend
-cd client-mantine
+Testes de banco locais são opt-in: RUN_DATABASE_TESTS=1, com DATABASE_URL e DIRECT_URL apontando para banco LOCAL cujo nome termina em _test. Aplique a migração antes. Sem essa variável, o teste de banco é pulado; demais testes continuam rodando. Não apontar testes para bases da equipe.
 
-# Instale as dependências
-npm install
+Build do backend regenera o Prisma antes de compilar, evitando usar tipos antigos. O gerador é invocado explicitamente da dependência local para evitar falha de resolução observada no diretório OneDrive. generated/ e dist/ são artefatos ignorados pelo Git.
 
-# Ligue o servidor de desenvolvimento do Vite
-npm run dev
-```
+## Contratos e limitações
 
-Pronto! Acesse o link fornecido pelo Vite no terminal (geralmente `http://localhost:5173`) para visualizar o sistema.
+docs/openapi.yaml descreve apenas endpoints existentes. Endpoints planejados e tarefas por perfil estão no guia de repasse.
+O schema atende uma instituição por ambiente. Operação multi-institucional, uploads, comunicação, banco de questões, recuperação de senha e integrações externas ainda precisam de implementação e testes específicos.
+Produção exige revisar proxy confiável, HTTPS, retenção, backups e monitoramento. O limitador de login atual é local a um processo.
+
+## Stack
+
+Frontend: React, TypeScript, Vite, Mantine (versão declarada no package.json), React Router, Mantine Charts/Recharts.
+Backend: Express 4, TypeScript, Prisma 5, PostgreSQL, bcryptjs (algoritmo bcrypt).
+Não foi feita migração de versão principal dos frameworks.

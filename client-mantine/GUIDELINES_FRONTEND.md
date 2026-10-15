@@ -1,32 +1,18 @@
-# 🎨 Diretrizes de Desenvolvimento Frontend
+# Frontend — regras de contribuição
 
-Este documento serve como guia para manter o padrão e a organização do código no lado do cliente (React). Se você for utilizar alguma IA para auxiliar na codificação, certifique-se de instruí-la a seguir estas mesmas regras para não quebrar a arquitetura do projeto.
+React + TypeScript + Vite + Mantine e React Router, nas versões do package.json/lockfile. Não usar Tailwind ou Bootstrap.
 
-## 🛠️ Nosso Stack Técnico
-- **Framework:** React 19 + TypeScript
-- **Bundler:** Vite
-- **Roteamento:** `react-router-dom` v6+
-- **Biblioteca de UI:** Mantine UI (v7)
-- **Ícones:** `@tabler/icons-react`
-- **Gráficos:** `@mantine/charts` e `recharts`
+- components: elementos reutilizáveis; pages: telas; routes: rotas; services: HTTP; auth: sessão e contexto.
+- src/services/api.ts é o cliente HTTP comum. Usar /api relativo, credentials e CSRF já centralizados. Não guardar token de autenticação em localStorage.
+- AuthProvider consulta a sessão no servidor; RequireRole protege a navegação. O backend continua responsável por autorização sobre cada recurso.
+- Cada perfil cria telas em pages/<Perfil> e propõe mudanças de rotas em PR pequeno; não duplicar layout ou sessão.
+- Tipar DTOs conforme docs/openapi.yaml. Endpoints ainda planejados estão no guia de repasse.
+- Componentes podem usar CSS responsivo/semântico quando necessário; priorizar Mantine e tokens do tema. HTML semântico é permitido.
+- Suportar rolagem, teclado, foco, rótulos, erros associados, tema claro/escuro e largura de 360px. Não ocultar overflow global para mascarar layout.
+- Sempre ter estados de carregamento, vazio e erro. Botões sem implementação devem estar indisponíveis ou identificados.
+- Fixtures ficam em data/demo.ts e devem estar claramente identificadas. Não apresentar números simulados como resultados reais.
+- Fórmulas reais pertencem ao backend. O frontend formata e apresenta indicadores, período, cobertura e motivos.
+- Login mantém a identidade visual do protótipo; vídeo somente em desktop sem preferência de movimento reduzido.
+- Antes do PR: npm run lint, npm run build e revisão dos fluxos nos tamanhos de referência.
 
-## 📂 Arquitetura de Pastas
-O código-fonte dentro de `src/` está organizado da seguinte forma:
-- `/components`: **Exclusivo para componentes visuais reaproveitáveis** (ex: botões customizados, cards de métricas, tabelas genéricas). Não coloque lógica de rotas aqui.
-- `/pages`: **Exclusivo para as telas completas do sistema**. Cada tela deve ser uma junção dos componentes. Exemplo: `/pages/Coordenador/Dashboard`.
-- `/routes`: **Onde definimos as URLs** e qual página será carregada (o arquivo `index.tsx` centraliza isso com o `createBrowserRouter`).
-- `/styles`: Tema global e customizações visuais padrão do Mantine.
-
-## 📐 Regras de Ouro de Código
-1. **Zero CSS Customizado (Sempre que possível):**
-   O Mantine é flexível o suficiente para que não precisemos de arquivos `.css` isolados. Use as propriedades `style` ou as *props* diretas do Mantine (como `p="md"`, `mt="xl"`, `c="brand"`) para espaçamentos e cores.
-
-2. **Proibido Tailwind ou Bootstrap:**
-   Nós já usamos o Mantine UI. Misturar outras bibliotecas de CSS vai gerar conflitos, código sujo e quebrar o visual da plataforma.
-
-3. **Design Mobile-First:**
-   O layout deve funcionar em celulares. Ao invés de definir larguras fixas (`width: 800px`), utilize os componentes `Grid` ou `SimpleGrid` do Mantine, que se adaptam automaticamente ao tamanho da tela. Exemplo: `<SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>`.
-
-4. **Padronização Visual (SaaS Moderno):**
-   - Evite cores extravagantes no fundo. Use tons neutros (branco, cinza claro).
-   - Para agrupar informações, utilize o componente `<Paper withBorder shadow="sm" radius="md">`. Isso garante a padronização das "caixinhas" com sombra e bordas delicadas em todo o sistema.
+Perfis de aluno, professor e responsável atualmente têm apenas área autenticada de desenvolvimento. Não declarar esses fluxos como prontos.

@@ -1,117 +1,45 @@
-import { Container, Title, TextInput, PasswordInput, Checkbox, Anchor, Button, Group, Stack, Flex } from '@mantine/core';
-import { IconUser, IconLock, IconSchool } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
+import { useState, type FormEvent } from 'react';
+import { Alert, Button, Container, Flex, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { IconSchool } from '@tabler/icons-react';
+import { useMediaQuery, useReducedMotion } from '@mantine/hooks';
 import backgroundVideo from '../../video.mp4';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { DarkModeToggle } from '../../components/DarkModeToggle';
-import { useNavigate } from 'react-router-dom';
-
+import { caminhoPerfil, useAuth } from '../../auth/context';
+import './login.css';
 export function LoginScreen() {
+  const { entrar, usuario } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogin = () => {
-    // Para fins de protótipo, estamos redirecionando direto para o dashboard do coordenador.
-    // O sistema de rotas fará esse redirecionamento correto com base na autenticação futura.
-    navigate('/coordenador/dashboard');
+  const desktop = useMediaQuery('(min-width: 48em)');
+  const reducedMotion = useReducedMotion();
+  const [email, setEmail] = useState(''), [senha, setSenha] = useState('');
+  const [erro, setErro] = useState<string | null>(null), [enviando, setEnviando] = useState(false);
+  if (usuario) return <Navigate to={caminhoPerfil(usuario.role)} replace />;
+  const submit = async (event: FormEvent) => {
+    event.preventDefault(); setErro(null); setEnviando(true);
+    try { const user = await entrar(email, senha); setSenha(''); navigate(caminhoPerfil(user.role), { replace: true }); }
+    catch (error) { setErro(error instanceof Error ? error.message : 'Falha ao entrar.'); }
+    finally { setEnviando(false); }
   };
-
-  return (
-    <Flex style={{ width: '100vw', minHeight: '100vh', margin: 0, padding: 0 }}>
-      
-      {/* Lado Esquerdo - Vídeo e Logo */}
-      <Flex 
-        flex={1}
-        direction="column"
-        align="center"
-        justify="center"
-        style={{ 
-          position: 'relative',
-          backgroundColor: '#2D6D65', 
-          color: 'white',
-          overflow: 'hidden'
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, filter: 'blur(10px)', scale: 1.05 }}
-          animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
-          transition={{ duration: 3.5, ease: "easeOut" }}
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
-        >
-          <video
-            autoPlay
-            muted
-            loop={true}
-            playsInline
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          >
-            <source src={backgroundVideo} type="video/mp4" />
-          </video>
-        </motion.div>
-
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(45, 109, 101, 0.6)', zIndex: 1 }} />
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{ zIndex: 2 }}
-        >
-          <Stack align="center" gap="sm">
-            <IconSchool size={160} stroke={1.5} />
-            <Title order={1} style={{ fontSize: '4rem', letterSpacing: '1px', fontWeight: 600 }}>ProFácil</Title>
-          </Stack>
-        </motion.div>
-      </Flex>
-
-      {/* Lado Direito - Formulário */}
-      <Flex 
-        flex={1}
-        align="center"
-        justify="center"
-        style={{ position: 'relative' }}
-      >
-        <DarkModeToggle />
-
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          style={{ width: '100%', maxWidth: '420px' }}
-        >
-          <Container size="xs" style={{ width: '100%' }}>
-            <Title order={2} c="brand" mb="xl" style={{ fontSize: '2.5rem', fontWeight: 700 }}>
-              LOGIN
-            </Title>
-
-            <Stack gap="lg">
-              <TextInput
-                placeholder="Usuário"
-                leftSection={<IconUser size={20} />}
-                size="md"
-                radius="xl"
-              />
-
-              <PasswordInput
-                placeholder="Senha"
-                leftSection={<IconLock size={20} />}
-                size="md"
-                radius="xl"
-              />
-
-              <Group justify="space-between" mt="xs">
-                <Checkbox label="Lembrar" color="brand" />
-                <Anchor size="sm" c="brand" fw={600} style={{ cursor: 'pointer' }}>
-                  Esqueceu a senha?
-                </Anchor>
-              </Group>
-
-              <Button fullWidth size="lg" radius="xl" color="brand" mt="xl" onClick={handleLogin}>
-                Entrar
-              </Button>
-            </Stack>
-          </Container>
-        </motion.div>
-      </Flex>
-
+  return <Flex className="login-shell">
+    <Flex className="login-brand" direction="column" align="center" justify="center" gap="md">
+      {desktop && !reducedMotion && <video className="login-video" autoPlay muted loop playsInline aria-hidden><source src={backgroundVideo} type="video/mp4" /></video>}
+      <Stack className="login-logo" align="center"><IconSchool size={100} aria-hidden /><Title order={1}>ProFácil</Title><Text>Gestão escolar</Text></Stack>
     </Flex>
-  );
+    <Flex flex={1} align="center" justify="center" p="xl" pos="relative">
+      <div style={{ position: 'absolute', top: 16, right: 16 }}><DarkModeToggle /></div>
+      <Container size="xs" w="100%">
+        <form onSubmit={submit}>
+          <Stack>
+            <Title order={2} c="brand">Entrar</Title>
+            {erro && <Alert color="red" role="alert">{erro}</Alert>}
+            <TextInput label="E-mail" type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.currentTarget.value)} />
+            <PasswordInput label="Senha" autoComplete="current-password" required value={senha} onChange={event => setSenha(event.currentTarget.value)} />
+            <Button type="submit" loading={enviando}>Entrar</Button>
+            <Text size="sm" c="dimmed">Solicite à coordenação o cadastro ou a recuperação de acesso.</Text>
+          </Stack>
+        </form>
+      </Container>
+    </Flex>
+  </Flex>;
 }

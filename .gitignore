@@ -52,3 +52,13 @@ Thumbs.db
 !.vscode/launch.json
 !.vscode/extensions.json
 .idea/
+# Artefatos gerados
+server/generated/
+server/prisma/schema.verify.prisma
+*.tsbuildinfo
+
+# Credenciais locais e contas de teste (nunca versionar)
+CONTAS_TESTE*.md
+CONTAS_TESTE*.json
+.env.*
+!.env.example
