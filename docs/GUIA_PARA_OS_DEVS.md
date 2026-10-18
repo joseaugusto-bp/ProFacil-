@@ -1,11 +1,15 @@
 # Profácil — guia de repasse para a próxima entrega do PI
-Revisão técnica: 15/10/2026. Objetivo: dividir o desenvolvimento por perfil com uma base e um contrato únicos.
+Revisão técnica: 18/10/2026. Objetivo: dividir o desenvolvimento por perfil com uma base e um contrato únicos.
+
+## Recorte da entrega atual
+Recorte da entrega do 6º período — Fase 02: login, sessão, logout dos quatro perfis e cadastro/listagem de alunos pela coordenação, com persistência, validações e permissões. O dashboard acadêmico permanece demonstrativo; turmas, vínculos acadêmicos, notas, frequência, boletim e indicadores reais são etapas futuras.
+As tarefas por perfil e critérios acadêmicos das seções 5 a 7 são backlog para evolução, salvo o que estiver explicitamente identificado como implementado. Não são exigências adicionais desta Fase 02.
 
 ## 1. O que foi corrigido na base
 
 - Cliente Prisma regenerado do schema atual, com geração automática antes do build e verificação de sincronismo.
 - Cadastro de aluno cria Usuario + Aluno em transação, papel fixo ALUNO, senha bcrypt e auditoria; valida nome/e-mail/senha e não retorna hash.
-- API de alunos exige coordenação e sessão. Listagem paginada.
+- API de alunos exige coordenação e sessão. Listagem paginada integrada à tela /coordenador/alunos, com cadastro real e auditoria pelo endpoint existente.
 - Tratamento assíncrono no Express 4, erros padronizados e diagnósticos internos ocultos.
 - Login real, sessão opaca no banco, cookie HttpOnly, expiração, revogação/logout, CSRF, origem e limite de tentativas.
 - Rotas por perfil. Perfis sem funcionalidades têm tela explícita de desenvolvimento.
@@ -29,7 +33,7 @@ Schema, helper ou mock não significa funcionalidade integrada. Não atribuir st
 1. Líder designa um responsável pela base e um revisor. Essa responsabilidade é adicional à divisão por perfil.
 2. Usar temporariamente o Supabase de desenvolvimento compartilhado. Cada dev mantém seu server/.env com a conexão fornecida em canal privado, sem instalar PostgreSQL local. Não compartilhar login pessoal do Supabase nem enviar a conexão ao Git/frontend. Consulte SUPABASE_COMPARTILHADO.md.
 3. Cada dev roda instalação, geração do Prisma, testes sem banco e builds. Somente o responsável aplica as migrações; a migração inicial exige destino sem tabelas antigas do Profácil. Testes de banco continuam isolados na CI, nunca no Supabase compartilhado.
-4. Criar coordenador por npm run bootstrap; não há senha padrão.
+4. Receber a conta do próprio perfil por canal privado. O banco compartilhado já tem coordenador e contas fictícias; os devs não executam bootstrap. Somente o responsável provisiona o primeiro coordenador em uma base nova sem essa conta; não há senha padrão.
 5. Combinar issues e contratos antes de alterar dados compartilhados.
 6. Trabalhar em feature/<issue>-<descricao>; integrar continuamente por PR, não juntar os quatro perfis só no fim.
 
@@ -75,13 +79,13 @@ Não enviar role, usuarioId, autorId ou instituição para tentar atribuir privi
 - Sessão: 8h absolutas/30min ociosas; cookie HttpOnly, Secure em produção, SameSite Strict; CSRF nas escritas.
 - Recuperação, política de aprovação/recuperação definitiva e exceções de reabertura continuam sujeitas à validação institucional.
 
-## 6. Divisão por perfil
+## 6. Backlog futuro por perfil
 
 ### Você — Coordenador
 Responsabilidade: administração acadêmica e visão da instituição.
 
 Tarefas em ordem:
-- COORD-01: integrar listagem e cadastro de alunos aos endpoints existentes, com formulário, paginação, vazio, erro e validação.
+- COORD-01: IMPLEMENTADO — /coordenador/alunos consome GET/POST /api/alunos, com formulário, paginação, vazio, carregamento, erro e validação; cadastro e persistência após recarregar verificados no navegador contra o Supabase.
 - COORD-02: implementar CRUD controlado de turma, disciplina e período; listar ano/período explicitamente.
 - COORD-03: implementar matrícula e transferência transacional preservando histórico.
 - COORD-04: vincular professor a turma/disciplina e validar/revogar responsáveis.
@@ -159,7 +163,7 @@ Arquivos compartilhados (schema.prisma, migrations, app.ts, routes/index.tsx, au
 Não alterar enums/DTOs ou gerar novas tabelas equivalentes sem alinhamento. O Supabase compartilhado é o ambiente temporário de integração: um responsável aplica migrações e combina alterações de dados. Usar registros fictícios identificáveis por dev e evitar editar os dados dos colegas. Preparar um projeto/base separado para demonstração quando possível.
 Integração contínua em PRs pequenos; atualizar schema/cliente e usar dados fictícios consistentes.
 
-## 9. Critério de pronto por tarefa
+## 9. Critério de pronto por tarefa de desenvolvimento
 
 - Regra e contrato definidos; estados de erro/vazio/carregamento tratados.
 - Backend autentica e autoriza o recurso, inclusive com IDs manipulados.
@@ -169,10 +173,14 @@ Integração contínua em PRs pequenos; atualizar schema/cliente e usar dados fi
 - Build, lint e CI aprovados; documento e contrato atualizados.
 - Revisão de outro integrante.
 
-## 10. Demonstração conjunta mínima
+## 10. Demonstração da Fase 02
+
+Recorte atual: entrar com os quatro perfis; consultar/manter sessão e sair; coordenador cadastra aluno e consulta a lista; recarregar e confirmar persistência; recusar cadastro duplicado/entrada inválida e acesso de outros perfis à API de alunos; demonstrar os bloqueios de origem e CSRF. Apresentar indicadores como dados fictícios. Evidências: 13 testes automatizados e 42 verificações HTTP aprovados, mais cadastro e consulta direta de persistência; ver VALIDACAO_TECNICA.md.
+
+## 11. Demonstração acadêmica futura — fora desta entrega
 
 Coordenador cria/vincula contexto → professor cria avaliação e lança nota → aluno consulta/envia → responsável consulta somente seu dependente → dashboard reflete os mesmos registros.
 
 Testar também: professor alheio recebe 403; responsável sem vínculo recebe 403; envio após prazo é recusado; nota corrigida atualiza risco; transferência preserva histórico; atualização com versão antiga não sobrescreve a nova.
 
-Alinhar este recorte com o roteiro de avaliação da próxima entrega. Não ampliar comunicação, IA ou exportação antes de demonstrar o fluxo principal integrado.
+O percurso acadêmico acima orienta uma próxima etapa; não é condição adicional para o recorte implementado desta entrega. Validar o planejamento futuro com o orientador antes de ampliar o escopo.

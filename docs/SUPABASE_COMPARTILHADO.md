@@ -4,7 +4,10 @@
 Os quatro integrantes executam backend e frontend nos próprios computadores, usando um PostgreSQL de desenvolvimento compartilhado no Supabase. Não precisam instalar PostgreSQL ou Docker para desenvolver os perfis.
 Dados fictícios apenas. Um responsável pela base aplica mudanças de estrutura; os demais propõem migrações em PR.
 
-## Responsável pela base — configuração inicial
+## Ambiente atual
+O projeto profacil-dev já está provisionado, com migração, conexão e contas fictícias verificadas. Os passos de configuração inicial abaixo são referência para um ambiente novo; não precisam ser repetidos por cada dev.
+
+## Responsável pela base — configuração inicial de uma base nova
 1. Criar um projeto de desenvolvimento, por exemplo profacil-dev, preservando o projeto/banco antigo.
 2. Como o acesso será exclusivamente pelo Prisma/backend, desativar a Data API nas configurações de API do projeto novo. As permissões do Express não protegem uma Data API paralela.
 3. Em Connect, copiar a conexão Session pooler, porta 5432. Preservar host e usuário completos do painel e substituir apenas a senha; caracteres especiais da senha precisam de codificação de URL.
@@ -36,7 +39,7 @@ npm ci
 npm run dev
 ```
 
-Abrir http://localhost:5173. Não trocar a origem do navegador sem ajustar FRONTEND_ORIGIN do próprio backend.
+Abrir http://localhost:5173 ou http://127.0.0.1:5173. Em desenvolvimento, quando FRONTEND_ORIGIN é uma origem HTTP local, localhost e 127.0.0.1 são aceitos na mesma porta configurada (5173 neste ambiente). Outras portas e domínios não são liberados automaticamente. Em produção, somente a origem HTTPS configurada é aceita.
 A API usa 127.0.0.1:3000 e o Vite encaminha /api a ela. O navegador não recebe a URL PostgreSQL.
 Após atualizar o código, regenerar Prisma e reiniciar a API. Se houver nova migração pendente, aguardar o responsável aplicá-la.
 
@@ -51,7 +54,8 @@ Após atualizar o código, regenerar Prisma e reiniciar a API. Se houver nova mi
 - A CI continua em PostgreSQL descartável; nunca cadastrar a URL do Supabase de desenvolvimento como destino dos testes de banco.
 - Supabase Auth não está integrado: o login atual continua sendo a sessão do Profácil. Não criar uma segunda autenticação sem decisão de arquitetura.
 
-## Estado verificado em 15/10/2026
+## Estado consolidado em 18/10/2026
+Provisionamento iniciado em 15/10; conexão, contas, integração e evidências foram conferidas nas rodadas seguintes. Resultados históricos permanecem identificados em VALIDACAO_TECNICA.md.
 - Projeto: profacil-dev; referência hsnwwitfeuqojkmiwcps; região ca-central-1.
 - Aplicada a migração remota profacil_base_compartilhada: 18 tabelas de domínio, constraints, triggers e btree_gist no schema extensions.
 - Histórico Prisma inicial registrado com o checksum exato do arquivo local: c9c93da5929eccbe0dd8c9b51322a6618f9ca0085c57d3992914de6095021d65. A migração 20261015000000_base_compartilhada está concluída; db:deploy deve reconhecer esse registro quando a conexão estiver configurada. Não editar a migração já aplicada.
@@ -62,11 +66,11 @@ Após atualizar o código, regenerar Prisma e reiniciar a API. Se houver nova mi
 - Backend local conectado ao projeto novo com TLS; consulta real e prisma migrate status confirmaram conexão e nenhuma migração pendente. Quatro contas fictícias (coordenador, professor, aluno e responsável) foram criadas; login, sessão, permissão de listagem de alunos e logout validados pela API. Credenciais ficam fora do repositório.
 - A Data API não foi desativada pela integração; manter a recomendação do passo 2. As revogações e RLS acima já bloqueiam os papéis públicos nas tabelas atuais.
 
-## Próximo passo local
+## Configuração de um novo computador
 No painel do projeto, abrir Connect e copiar a URI Session pooler (5432).
 Preencher DATABASE_URL e DIRECT_URL em server/.env, substituindo a senha localmente com codificação de URL quando necessário. Não enviar a senha no chat.
 Preservar sslmode=require e usar connection_limit=2 em DATABASE_URL.
-Depois, o responsável executa npm run db:deploy para confirmar que não há migrações pendentes e provisiona o coordenador com npm run bootstrap.
+O responsável pode conferir migrações com npm exec -- prisma migrate status. Somente ele aplica futuras migrações com npm run db:deploy. O ambiente atual já possui coordenador e contas fictícias: não executar bootstrap novamente. Em uma base nova sem coordenador, seguir a seção específica do README.
 Os demais devs recebem a configuração por canal privado e não executam migrações.
 
 ## Referências

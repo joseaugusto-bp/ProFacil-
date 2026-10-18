@@ -1,0 +1,27 @@
+.portal-shell { --portal-bg: #f4f6fb; --portal-surface: #fff; }
+[data-mantine-color-scheme="dark"] .portal-shell { --portal-bg: #0e1420; --portal-surface: #151e2d; }
+.portal-shell .mantine-AppShell-main { background: var(--portal-bg); }
+.portal-content { max-width: 1500px; margin: 0 auto; padding-top: 10px; }
+.portal-header { background: var(--portal-surface); border-bottom: 1px solid var(--mantine-color-default-border); }
+.portal-sidebar { background: #0d172b; border-right: 1px solid #202d46; color: #e6edfb; }
+.portal-logo { display: flex; gap: 10px; align-items: center; text-decoration: none; color: #fff; font-weight: 700; font-size: 23px; letter-spacing: -.8px; padding: 3px 5px 14px; }
+.portal-logo img { object-fit: contain; }
+.portal-logo > span > span { color: #8fb4ff; }
+.portal-nav-label { color: #8fa1bf; font-size: 9px; letter-spacing: 1.3px; font-weight: 600; }
+.portal-sidebar .mantine-NavLink-root { color: #b9c7de; border-radius: 9px; min-height: 48px; }
+.portal-sidebar .mantine-NavLink-root:hover { background: #18263e; }
+.portal-sidebar .mantine-NavLink-root[data-active] { background: #234588; color: #fff; }
+.portal-sidebar .mantine-NavLink-description { color: #9aaccc; font-size: 10px; }
+.portal-sidebar-note { padding: 18px; border: 1px solid #293b5c; background: linear-gradient(135deg,#182c50,#13213a); border-radius: 12px; color: #b9cbed; }
+.portal-account { padding-top: 20px; border-top: 1px solid #29364c; }
+.portal-account-role { color: #9aaccc; }
+.portal-sidebar .portal-logout { color: #bdc9dc; }
+.portal-eyebrow { font-size: 10px; letter-spacing: 1.5px; font-weight: 700; color: var(--mantine-color-blue-6); }
+.portal-title { font-size: clamp(27px,3vw,34px); letter-spacing: -1px; font-weight: 650; }
+.portal-demo { border: 1px solid light-dark(#d9e5ff,#273e66); border-radius: 12px; }
+.portal-card { background: var(--portal-surface); box-shadow: 0 4px 20px #0b1a3a04; }
+.portal-card .mantine-Table-th { font-size: 11px; font-weight: 600; color: var(--mantine-color-dimmed); background: var(--portal-bg); }
+.portal-chart-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; pointer-events: none; }
+.portal-chart-center strong { font-size: 34px; letter-spacing: -1px; }
+.portal-chart-center span { font-size: 12px; color: var(--mantine-color-dimmed); }
+@media(max-width:650px) { .portal-title { font-size: 27px; } .portal-content { padding-top: 2px; } }

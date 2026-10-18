@@ -4,8 +4,12 @@
 Frontend em client-mantine; API em server; contratos em docs. Uma instituição por ambiente.
 A divisão de entrega é por perfil, com responsável principal para cada fluxo completo (tela, API, permissões e testes). Banco, identidade, indicadores e contratos são compartilhados e têm revisão conjunta. Consulte docs/GUIA_PARA_OS_DEVS.md.
 
+## Recorte da Fase 02
+Recorte da entrega do 6º período — Fase 02: login, sessão, logout dos quatro perfis e cadastro/listagem de alunos pela coordenação, com persistência, validações e permissões. O dashboard acadêmico permanece demonstrativo; turmas, vínculos acadêmicos, notas, frequência, boletim e indicadores reais são etapas futuras.
+Critérios futuros por perfil não ampliam o aceite desta entrega. Os estados planejado, implementado e validado devem permanecer explícitos.
+
 ## Git
-Main é a linha principal de integração. Toda mudança, inclusive do líder técnico, deve passar por PR revisado e CI aprovada.
+Main é a linha principal de integração. A política para novas contribuições é passar por PR revisado e CI aprovada, inclusive mudanças do líder técnico. Essa política não comprova que todo o histórico já seguiu esse fluxo; registrar exceções e resultados reais sem presumir revisão ou CI executada.
 Branches curtas: feature/<issue>-<descricao>. Exemplo: feature/12-boletim-aluno.
 Partir da main atualizada, fazer commits focados e atualizar a branch antes da revisão. Merge ou rebase conforme política do grupo; não reescrever main ou histórico compartilhado sem coordenação.
 Não adicionar segredos, .env, dependências instaladas ou artefatos gerados.

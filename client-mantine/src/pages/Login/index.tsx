@@ -1,17 +1,13 @@
 import { useState, type FormEvent } from 'react';
-import { Alert, Button, Container, Flex, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
-import { IconSchool } from '@tabler/icons-react';
-import { useMediaQuery, useReducedMotion } from '@mantine/hooks';
-import backgroundVideo from '../../video.mp4';
+import { Alert, Button, MantineProvider, PasswordInput, TextInput } from '@mantine/core';
+import { IconArrowRight, IconLock } from '@tabler/icons-react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { DarkModeToggle } from '../../components/DarkModeToggle';
 import { caminhoPerfil, useAuth } from '../../auth/context';
 import './login.css';
+
 export function LoginScreen() {
   const { entrar, usuario } = useAuth();
   const navigate = useNavigate();
-  const desktop = useMediaQuery('(min-width: 48em)');
-  const reducedMotion = useReducedMotion();
   const [email, setEmail] = useState(''), [senha, setSenha] = useState('');
   const [erro, setErro] = useState<string | null>(null), [enviando, setEnviando] = useState(false);
   if (usuario) return <Navigate to={caminhoPerfil(usuario.role)} replace />;
@@ -21,25 +17,29 @@ export function LoginScreen() {
     catch (error) { setErro(error instanceof Error ? error.message : 'Falha ao entrar.'); }
     finally { setEnviando(false); }
   };
-  return <Flex className="login-shell">
-    <Flex className="login-brand" direction="column" align="center" justify="center" gap="md">
-      {desktop && !reducedMotion && <video className="login-video" autoPlay muted loop playsInline aria-hidden><source src={backgroundVideo} type="video/mp4" /></video>}
-      <Stack className="login-logo" align="center"><IconSchool size={100} aria-hidden /><Title order={1}>ProFácil</Title><Text>Gestão escolar</Text></Stack>
-    </Flex>
-    <Flex flex={1} align="center" justify="center" p="xl" pos="relative">
-      <div style={{ position: 'absolute', top: 16, right: 16 }}><DarkModeToggle /></div>
-      <Container size="xs" w="100%">
-        <form onSubmit={submit}>
-          <Stack>
-            <Title order={2} c="brand">Entrar</Title>
-            {erro && <Alert color="red" role="alert">{erro}</Alert>}
-            <TextInput label="E-mail" type="email" autoComplete="username" required value={email} onChange={event => setEmail(event.currentTarget.value)} />
-            <PasswordInput label="Senha" autoComplete="current-password" required value={senha} onChange={event => setSenha(event.currentTarget.value)} />
-            <Button type="submit" loading={enviando}>Entrar</Button>
-            <Text size="sm" c="dimmed">Solicite à coordenação o cadastro ou a recuperação de acesso.</Text>
-          </Stack>
+  return <MantineProvider forceColorScheme="dark"><main className="login-shell">
+    <section className="login-panel" aria-labelledby="login-title">
+      <a className="login-wordmark" href="/" aria-label="Profácil, início"><span className="login-mark"><img src="/logo-profacil.png" alt="" width="39" height="39" /></span>Pro<span>Fácil</span></a>
+      <div className="login-form-wrap">
+        <span className="login-eyebrow">SEU PORTAL ESCOLAR</span>
+        <h1 id="login-title">Bom ter você<br />por aqui.</h1>
+        <p className="login-intro">Entre na sua conta e acompanhe o que acontece na sua escola.</p>
+        <form onSubmit={submit} className="login-form" aria-busy={enviando}>
+          {erro && <Alert color="red" role="alert" id="login-error">{erro}</Alert>}
+          <TextInput label="E-mail" placeholder="Seu e-mail de acesso" type="email" autoComplete="username" required size="md" radius="sm" value={email} aria-describedby={erro ? 'login-error' : undefined} onChange={event => setEmail(event.currentTarget.value)} />
+          <PasswordInput label="Senha" placeholder="Digite sua senha" autoComplete="current-password" required size="md" radius="sm" value={senha} aria-describedby={erro ? 'login-error' : undefined} visibilityToggleButtonProps={{ 'aria-label': 'Mostrar ou ocultar senha' }} onChange={event => setSenha(event.currentTarget.value)} />
+          <Button type="submit" loading={enviando} size="md" radius="sm" color="blue" rightSection={<IconArrowRight size={18} aria-hidden />}>Entrar no portal</Button>
         </form>
-      </Container>
-    </Flex>
-  </Flex>;
+        <p className="login-help">Primeiro acesso ou esqueceu sua senha?<br /><strong>Solicite ajuda à coordenação da escola.</strong></p>
+      </div>
+      <div className="login-footer"><IconLock size={14} aria-hidden /><span>Acesso exclusivo à comunidade escolar</span></div>
+    </section>
+    <section className="login-brand" aria-label="Profácil">
+      <div className="login-art" aria-hidden="true"><div className="login-orbit orbit-one" /><div className="login-orbit orbit-two" /><div className="login-orbit orbit-three" /><div className="login-stars" /></div>
+      <div className="login-brand-content">
+        <img className="login-brand-logo" src="/logo-profacil.png" alt="" width="160" height="160" />
+        <p className="login-brand-name">ProFácil</p>
+      </div>
+    </section>
+  </main></MantineProvider>;
 }

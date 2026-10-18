@@ -19,14 +19,22 @@ export function createApp(deps: Dependencies = {}) {
   const origin = deps.origin ?? process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
   const production = deps.production ?? process.env.NODE_ENV === 'production';
   if (production && !origin.startsWith('https://')) throw new Error('FRONTEND_ORIGIN deve usar HTTPS em produção.');
+  const allowedOrigins = new Set([origin]);
+  const configuredOrigin = new URL(origin);
+  if (!production && configuredOrigin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(configuredOrigin.hostname)) {
+    for (const host of ['localhost', '127.0.0.1']) {
+      const localOrigin = new URL(origin); localOrigin.hostname = host;
+      allowedOrigins.add(localOrigin.origin);
+    }
+  }
   const cookieOptions = { httpOnly: true, secure: production, sameSite: 'strict' as const, path: '/api' };
   app.disable('x-powered-by');
   app.use((_req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Cache-Control', 'no-store'); next(); });
-  app.use(cors({ origin, credentials: true, allowedHeaders: ['Content-Type', 'X-CSRF-Token'] }));
+  app.use(cors({ origin: (requestOrigin, callback) => callback(null, !!requestOrigin && allowedOrigins.has(requestOrigin)), credentials: true, allowedHeaders: ['Content-Type', 'X-CSRF-Token'] }));
   app.use(express.json({ limit: '32kb' }));
   // Requisições de escrita exigem origem explícita inclusive para login.
   app.use('/api', (req, _res, next) => {
-    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && req.get('origin') !== origin) return next(new ApiError(403, 'ORIGEM_INVALIDA', 'Origem não autorizada.'));
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !allowedOrigins.has(req.get('origin') ?? '')) return next(new ApiError(403, 'ORIGEM_INVALIDA', 'Origem não autorizada.'));
     next();
   });
   app.get('/api/health', (_req, res) => { res.json({ status: 'ok' }); });

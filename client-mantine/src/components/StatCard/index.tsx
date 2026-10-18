@@ -9,25 +9,25 @@ interface StatCardProps {
   description?: string;
 }
 
-export function StatCard({ title, value, icon: Icon, color = 'brand', description }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, color = 'blue', description }: StatCardProps) {
   return (
-    <Paper withBorder p="md" radius="md" shadow="sm">
+    <Paper className="portal-card" withBorder p="lg" radius="lg" h="100%">
       <Group justify="space-between" align="flex-start">
         <div>
-          <Text c="dimmed" tt="uppercase" fw={700} size="xs" mb="xs">
+          <Text c="dimmed" fw={500} size="sm" mb="xs">
             {title}
           </Text>
-          <Text fw={700} size="xl">
+          <Text fw={650} size="34px" lh={1.2}>
             {value}
           </Text>
         </div>
-        <ThemeIcon color={color} variant="light" size={38} radius="md">
+        <ThemeIcon color={color} variant="light" size={44} radius="md">
           <Icon size={24} stroke={1.5} />
         </ThemeIcon>
       </Group>
 
       {description && (
-        <Text c="dimmed" size="sm" mt="md">
+        <Text c="dimmed" size="xs" mt="lg">
           {description}
         </Text>
       )}

@@ -12,7 +12,9 @@ React + TypeScript + Vite + Mantine e React Router, nas versões do package.json
 - Sempre ter estados de carregamento, vazio e erro. Botões sem implementação devem estar indisponíveis ou identificados.
 - Fixtures ficam em data/demo.ts e devem estar claramente identificadas. Não apresentar números simulados como resultados reais.
 - Fórmulas reais pertencem ao backend. O frontend formata e apresenta indicadores, período, cobertura e motivos.
-- Login mantém a identidade visual do protótipo; vídeo somente em desktop sem preferência de movimento reduzido.
+- Login atual: logo oficial transparente em public/logo-profacil.png, arte CSS e tema escuro fixo, sem vídeo. O painel oferece alternância claro/escuro. Respeitar prefers-reduced-motion nas animações; requisitos de acessibilidade e responsividade precisam de verificação própria.
 - Antes do PR: npm run lint, npm run build e revisão dos fluxos nos tamanhos de referência.
 
-Perfis de aluno, professor e responsável atualmente têm apenas área autenticada de desenvolvimento. Não declarar esses fluxos como prontos.
+Recorte da entrega do 6º período — Fase 02: login, sessão, logout dos quatro perfis e cadastro/listagem de alunos pela coordenação, com persistência, validações e permissões. O dashboard acadêmico permanece demonstrativo; turmas, vínculos acadêmicos, notas, frequência, boletim e indicadores reais são etapas futuras.
+
+Perfis de aluno, professor e responsável atualmente têm apenas área autenticada de desenvolvimento. Não declarar esses fluxos acadêmicos como prontos. A tela /coordenador/alunos consome os endpoints reais; não substituir seus dados por fixtures.

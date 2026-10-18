@@ -9,7 +9,7 @@ import type { AuthContext, CurrentUser } from '../services/auth.service';
 import { AlunoService } from '../services/aluno.service';
 const origin = 'http://localhost:5173';
 const user: CurrentUser = { id: 'u1', nome: 'Coordenação', email: 'coord@example.test', role: 'COORDENADOR', aluno: null, professor: null, responsavel: null };
-async function withApp(run: (url: string) => Promise<void>, role: CurrentUser['role'] = 'COORDENADOR', fail = false) {
+async function withApp(run: (url: string) => Promise<void>, role: CurrentUser['role'] = 'COORDENADOR', fail = false, production = false) {
  let active = true;
  const auth = {
   entrar: async () => ({ token: 'token-teste', csrfToken: 'csrf-teste', usuario: { ...user, role } }),
@@ -25,7 +25,7 @@ async function withApp(run: (url: string) => Promise<void>, role: CurrentUser['r
    return { dados: [], paginacao: { pagina: 1, limite: 20, total: 0 } };
   }
  }
- const server: Server = createApp({ auth, alunos: new TestAlunos(), origin }).listen(0, '127.0.0.1');
+ const server: Server = createApp({ auth, alunos: new TestAlunos(), origin: production ? 'https://escola.example' : origin, production }).listen(0, '127.0.0.1');
  await once(server, 'listening');
  try { await run('http://127.0.0.1:' + (server.address() as AddressInfo).port); }
  finally { server.closeAllConnections(); await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve())); }
@@ -55,3 +55,22 @@ test('cookie é HttpOnly e logout revoga acesso', () => withApp(async url => {
 test('paginação inválida é recusada antes da consulta', () => withApp(async url => {
  assert.equal((await fetch(url + '/api/alunos?limite=1000', { headers: { cookie: 'profacil_session=token-teste' } })).status, 400);
 }));
+
+ test('desenvolvimento aceita os dois hosts locais e recusa outras portas e origens', () => withApp(async url => {
+  for (const local of ['http://localhost:5173', 'http://127.0.0.1:5173']) {
+   const response = await fetch(url + '/api/auth/login', {method: 'POST', headers: {origin: local}});
+   assert.equal(response.status, 200);
+   assert.equal(response.headers.get('access-control-allow-origin'), local);
+  }
+  for (const invalid of ['http://localhost:5174', 'http://127.0.0.1.evil.test:5173', 'null', 'https://outro.example']) {
+   const response = await fetch(url + '/api/auth/login', {method: 'POST', headers: {origin: invalid}});
+   assert.equal(response.status, 403);
+   assert.equal(response.headers.get('access-control-allow-origin'), null);
+  }
+  assert.equal((await fetch(url + '/api/auth/login', {method: 'POST'})).status, 403);
+ }));
+ test('produção aceita somente a origem HTTPS configurada', () => withApp(async url => {
+  assert.equal((await fetch(url + '/api/auth/login', {method: 'POST', headers:{origin:'http://127.0.0.1:5173'}})).status,403);
+  const response=await fetch(url + '/api/auth/login', {method: 'POST', headers:{origin:'https://escola.example'}});
+  assert.equal(response.status,200); assert.match(response.headers.get('set-cookie') ?? '', /Secure/);
+ }, 'COORDENADOR', false, true));

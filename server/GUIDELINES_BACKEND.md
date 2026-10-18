@@ -20,4 +20,11 @@ Express 4 + TypeScript + Prisma 5 + PostgreSQL. Senhas com bcrypt via bcryptjs (
 - Antes de rodar teste de banco, verificar destino local com nome terminado em _test. Não usar .env da equipe.
 - Não adicionar criação automática de usuários, senhas padrão ou seed com dados reais.
 
-Funcionalidades acadêmicas ainda sem endpoint devem seguir o guia de repasse; existir no schema não equivale a serviço implementado.
+## Estado e recorte atual
+Recorte da entrega do 6º período — Fase 02: login, sessão, logout dos quatro perfis e cadastro/listagem de alunos pela coordenação, com persistência, validações e permissões. O dashboard acadêmico permanece demonstrativo; turmas, vínculos acadêmicos, notas, frequência, boletim e indicadores reais são etapas futuras.
+Endpoints disponíveis: GET /api/health; POST /api/auth/login; GET /api/auth/me; POST /api/auth/logout; GET e POST /api/alunos. A listagem e criação de alunos exigem coordenação; escritas autenticadas exigem origem e CSRF.
+
+As diretrizes acima sobre notas, transferências e vínculos orientam o desenvolvimento futuro. Não representam endpoints já disponíveis. Funcionalidades acadêmicas ainda sem endpoint devem seguir o backlog do guia; existir no schema não equivale a serviço implementado.
+
+Em desenvolvimento, quando FRONTEND_ORIGIN é uma origem HTTP local, localhost e 127.0.0.1 são aceitos na mesma porta configurada (5173 neste ambiente). Outras portas e domínios não são liberados automaticamente. Em produção, somente a origem HTTPS configurada é aceita.
+No Windows, encerrar a API antes de regenerar o Prisma/testar/buildar evita bloqueio da DLL em uso.
