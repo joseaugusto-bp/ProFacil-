@@ -1,1 +1,2 @@
 server/prisma/migrations/**/migration.sql -text
+.githooks/* text eol=lf

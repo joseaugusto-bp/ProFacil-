@@ -127,3 +127,7 @@ Produção exige revisar proxy confiável, HTTPS, retenção, backups e monitora
 Frontend: React, TypeScript, Vite, Mantine (versão declarada no package.json), React Router, Mantine Charts/Recharts.
 Backend: Express 4, TypeScript, Prisma 5, PostgreSQL, bcryptjs (algoritmo bcrypt).
 Não foi feita migração de versão principal dos frameworks.
+
+## Entrega final e revisão de código
+
+Consulte docs/GUIA_EQUIPE_ENTREGA_FINAL.md para divisão sugerida, checklist do PDF, branches, pull/rebase/push e revisão por PR. Ative o hook neste clone com git config --local core.hooksPath .githooks. O hook local bloqueia destino main e exige verificações; cada integrante precisa ativá-lo no próprio clone. A proteção de main no GitHub ainda precisa ser configurada pelo administrador e conferida; o arquivo CODEOWNERS apenas encaminha revisões enquanto essa regra não estiver ativa.
