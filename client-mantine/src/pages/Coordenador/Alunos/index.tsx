@@ -69,7 +69,6 @@ export function AlunosCoordenador() {
      <Group justify="space-between" mt="lg"><Text size="xs" c="dimmed">Página {pagina} de {Math.max(1,Math.ceil(lista.paginacao.total/20))} · até 20 alunos por página</Text><Pagination total={Math.max(1,Math.ceil(lista.paginacao.total/20))} value={pagina} onChange={setPagina} size="sm" aria-label="Paginação de alunos" /></Group>
     </> : <Stack align="center" py={45}><IconUsers size={34} /><Text fw={600}>Nenhum aluno cadastrado</Text><Text size="sm" c="dimmed" ta="center">Cadastre o primeiro aluno para começar.</Text><Button variant="light" onClick={abrir}>Cadastrar aluno</Button></Stack>}
   </Paper>
-  <Text size="xs" c="dimmed" mt="lg">Use apenas dados fictícios neste ambiente. O dashboard de indicadores continua demonstrativo.</Text>
   <Modal opened={modal} onClose={fechar} title="Cadastrar aluno" centered closeOnClickOutside={!salvando} closeOnEscape={!salvando} withCloseButton={!salvando}>
    <form onSubmit={cadastrar}><Stack>
     <Text size="sm" c="dimmed">Crie o acesso do aluno. Cadastro de turma, matrícula e vínculo com responsáveis serão tratados separadamente.</Text>

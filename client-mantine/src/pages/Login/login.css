@@ -1,6 +1,6 @@
 .login-shell { min-height: 100dvh; display: grid; grid-template-columns: minmax(360px, 32%) 1fr; background: #101319; color: #f3f5fa; font-family: inherit; }
 .login-panel { padding: 40px clamp(28px, 3.6vw, 70px) 28px; display: flex; flex-direction: column; min-width: 0; }
-.login-wordmark { display: inline-flex; align-items: center; align-self: flex-start; gap: 0; color: #f3f5fa; text-decoration: none; font-size: 24px; font-weight: 700; letter-spacing: -1px; }
+.login-wordmark { display: none; align-items: center; align-self: flex-start; gap: 0; color: #f3f5fa; text-decoration: none; font-size: 24px; font-weight: 700; letter-spacing: -1px; }
 .login-wordmark > span:last-child { color: #80aaff; }
 .login-mark { width: 39px; height: 39px; display: grid; place-items: center; margin-right: 10px; color: #a7c5ff; background: #1c2b45; border: 1px solid #31486e; border-radius: 12px; }
 .login-form-wrap { width: 100%; max-width: 380px; margin: auto; padding: 65px 0; }
@@ -39,7 +39,7 @@
 @keyframes login-glow { from { opacity: .4; transform: rotate(-30deg) scaleX(.62) translateY(-15px); } to { opacity: 1; transform: rotate(-20deg) scaleX(.67) translateY(15px); } }
 @media (min-width: 1600px) { .login-shell { grid-template-columns: minmax(440px, 30%) 1fr; } }
 @media (max-width: 900px) { .login-shell { grid-template-columns: minmax(340px, 45%) 1fr; } .login-brand { padding: 35px 30px; } .login-brand-name { font-size: 48px; } .login-brand-content h2 { font-size: 29px; } .login-brand-top { font-size: 8px; } }
-@media (max-width: 650px) { .login-shell { display: flex; flex-direction: column; } .login-panel { min-height: 100dvh; padding: 28px 26px 22px; } .login-form-wrap { padding: 48px 0; } .login-form-wrap h1 { font-size: 38px; } .login-brand { display: none; } .login-footer { justify-content: center; } }
+@media (max-width: 650px) { .login-shell { display: flex; flex-direction: column; } .login-panel { min-height: 100dvh; padding: 28px 26px 22px; } .login-wordmark { display: inline-flex; } .login-form-wrap { padding: 48px 0; } .login-form-wrap h1 { font-size: 38px; } .login-brand { display: none; } .login-footer { justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .login-orbit { animation: none; } }
 /* Identidade oficial: painel com apenas a logo e o nome. */
 .login-mark { overflow: hidden; border: 0; background: transparent; }
